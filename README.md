@@ -28,3 +28,14 @@ Final epoch results are shown below.
 
 Model archive is below.
 [Model Archive](https://storage.googleapis.com/deeplearning-archive/MRIGan/models.zip)
+
+
+## To use pre-trained model
+
+- clone the repo
+- import the pre-trained helper function from `model/pre_trained.py`
+```python
+from src.model.pre_trained import load_model
+
+model = load_model(model_type='[T1 or T2]')
+```

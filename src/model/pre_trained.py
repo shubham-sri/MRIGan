@@ -75,6 +75,9 @@ def load_model(model_type='T1'):
 
     print('Loading model...', end=' ')
 
+    if model_type not in ['T1', 'T2']:
+        raise ValueError('model_type must be T1 or T2')
+
     if model_type == 'T1':
         path_to_model = path_to_model / 'mri_gan_t1_to_t2'
     else:

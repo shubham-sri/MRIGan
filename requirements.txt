@@ -1,0 +1,6 @@
+tensorflow==2.10.0
+matplotlib==3.6.2
+scikit-image==0.19.3
+zipfile38
+pathlib
+jupyter
