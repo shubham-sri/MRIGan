@@ -3,19 +3,18 @@ import tensorflow as tf
 from matplotlib import pyplot as plt
 from IPython import display
 import time
-import tensorflow.keras.backend as K
 
-from src.model.generator import Generator
-from src.model.discriminator import Discriminator
+from src.model.generator import build_generator
+from src.model.discriminator import build_discriminator
 
 class MRIGan():
 
     def __init__(self, dataset_pipeline, epochs, checkpoint_path="./checkpoint") -> None:
-        self.generator_t1_to_t2 = Generator()
-        self.generator_t2_to_t1 = Generator()
+        self.generator_t1_to_t2 = build_generator()
+        self.generator_t2_to_t1 = build_generator()
 
-        self.discriminator_t1 = Discriminator()
-        self.discriminator_t2 = Discriminator()
+        self.discriminator_t1 = build_discriminator()
+        self.discriminator_t2 = build_discriminator()
         
         self.dataset_pipeline = dataset_pipeline
 
@@ -102,65 +101,61 @@ class MRIGan():
 
         plt.show()
 
+    
+    def summary(self):
+        self.generator_t1_to_t2.summary()
+        self.generator_t2_to_t1.summary()
+        self.discriminator_t1.summary()
+        self.discriminator_t2.summary()
+
     @tf.function
     def train_step(self, t1, t2):
         
         with tf.GradientTape(persistent=True) as tape:
-            fake_y = self.generator_t1_to_t2(t1, training=True)
-            cycled_x = self.generator_t2_to_t1(fake_y, training=True)
+            fake_t2 = self.generator_t1_to_t2(t1, training=True)
+            cycled_t1 = self.generator_t2_to_t1(fake_t2, training=True)
 
-            fake_x = self.generator_t2_to_t1(t2, training=True)
-            cycled_y = self.generator_t1_to_t2(fake_x, training=True)
+            fake_t1 = self.generator_t2_to_t1(t2, training=True)
+            cycled_t2 = self.generator_t1_to_t2(fake_t1, training=True)
 
-            same_x = self.generator_t2_to_t1(t1, training=True)
-            same_y = self.generator_t1_to_t2(t2, training=True)
+            same_t1 = self.generator_t2_to_t1(t1, training=True)
+            same_t2 = self.generator_t1_to_t2(t2, training=True)
 
-            disc_real_x = self.discriminator_t1(t1, training=True)
-            disc_real_y = self.discriminator_t2(t2, training=True)
+            disc_real_t1 = self.discriminator_t1(t1, training=True)
+            disc_real_t2 = self.discriminator_t2(t2, training=True)
 
-            disc_fake_x = self.discriminator_t1(fake_x, training=True)
-            disc_fake_y = self.discriminator_t2(fake_y, training=True)
+            disc_fake_t1 = self.discriminator_t1(fake_t1, training=True)
+            disc_fake_t2 = self.discriminator_t2(fake_t2, training=True)
 
-            # calculate the loss
-            gen_t1_to_t2_loss = self.generator_loss(disc_fake_y)
-            gen_t2_to_t1_loss = self.generator_loss(disc_fake_x)
+            # Generator t1 to t2 loss
+            gen_t1_to_t2_loss = self.generator_loss(disc_fake_t2)
+            # Generator t2 to t1 loss
+            gen_t2_to_t1_loss = self.generator_loss(disc_fake_t1)
+            # Total cycle loss
+            total_cycle_loss = self.cycle_loss(t1, cycled_t1) + self.cycle_loss(t2, cycled_t2)
 
-            total_cycle_loss = self.cycle_loss(t1, cycled_x) + self.cycle_loss(t2, cycled_y)
+            # Total generator loss
+            total_gen_t1_to_t2_loss = gen_t1_to_t2_loss + total_cycle_loss + self.identity_loss(t2, same_t2)
+            total_gen_t2_to_t1_loss = gen_t2_to_t1_loss + total_cycle_loss + self.identity_loss(t1, same_t1)
 
-            # Total generator loss = adversarial loss + cycle loss
-            total_gen_t1_to_t2_loss = gen_t1_to_t2_loss + total_cycle_loss + self.identity_loss(t2, same_y)
-            total_gen_t2_to_t1_loss = gen_t2_to_t1_loss + total_cycle_loss + self.identity_loss(t1, same_x)
-
-            disc_t1_loss = self.discriminator_loss(disc_real_x, disc_fake_x)
-            disc_t2_loss = self.discriminator_loss(disc_real_y, disc_fake_y)
+            # Discriminator t1 loss
+            disc_t1_loss = self.discriminator_loss(disc_real_t1, disc_fake_t1)
+            # Discriminator t2 loss
+            disc_t2_loss = self.discriminator_loss(disc_real_t2, disc_fake_t2)
 
         # Calculate the gradients for generator and discriminator
-        generator_t1_to_t2_gradients = tape.gradient(total_gen_t1_to_t2_loss,
-                                                    self.generator_t1_to_t2.trainable_variables)
-        generator_t2_to_t1_gradients = tape.gradient(total_gen_t2_to_t1_loss,
-                                                    self.generator_t2_to_t1.trainable_variables)
-        
-        discriminator_t1_gradients = tape.gradient(disc_t1_loss,
-                                                self.discriminator_t1.trainable_variables)
-        discriminator_t2_gradients = tape.gradient(disc_t2_loss,
-                                                self.discriminator_t2.trainable_variables)
+        generator_t1_to_t2_gradients = tape.gradient(total_gen_t1_to_t2_loss, self.generator_t1_to_t2.trainable_variables)
+        generator_t2_to_t1_gradients = tape.gradient(total_gen_t2_to_t1_loss, self.generator_t2_to_t1.trainable_variables)
 
-        # Apply gradients
-        self.generator_t1_to_t2_optimizer.apply_gradients(
-            zip(generator_t1_to_t2_gradients, self.generator_t1_to_t2.trainable_variables)
-        )
+        discriminator_t1_gradients = tape.gradient(disc_t1_loss, self.discriminator_t1.trainable_variables)
+        discriminator_t2_gradients = tape.gradient(disc_t2_loss, self.discriminator_t2.trainable_variables)
 
-        self.generator_t2_to_t1_optimizer.apply_gradients(
-            zip(generator_t2_to_t1_gradients, self.generator_t2_to_t1.trainable_variables)
-        )
+        # Apply the gradients to the optimizer
+        self.generator_t1_to_t2_optimizer.apply_gradients(zip(generator_t1_to_t2_gradients, self.generator_t1_to_t2.trainable_variables))
+        self.generator_t2_to_t1_optimizer.apply_gradients(zip(generator_t2_to_t1_gradients, self.generator_t2_to_t1.trainable_variables))
 
-        self.discriminator_t1_optimizer.apply_gradients(
-            zip(discriminator_t1_gradients, self.discriminator_t1.trainable_variables)
-        )
-
-        self.discriminator_t2_optimizer.apply_gradients(
-            zip(discriminator_t2_gradients, self.discriminator_t2.trainable_variables)
-        )
+        self.discriminator_t1_optimizer.apply_gradients(zip(discriminator_t1_gradients, self.discriminator_t1.trainable_variables))
+        self.discriminator_t2_optimizer.apply_gradients(zip(discriminator_t2_gradients, self.discriminator_t2.trainable_variables))
 
     
     def train(self):
