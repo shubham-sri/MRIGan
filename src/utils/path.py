@@ -28,3 +28,5 @@ if len(T1_ALL_IMAGE_PATH) != len(T2_ALL_IMAGE_PATH):
     else:
         for _ in range(len(T2_ALL_IMAGE_PATH) - len(T1_ALL_IMAGE_PATH)):
             T1_ALL_IMAGE_PATH.append(random.choice(T1_ALL_IMAGE_PATH))
+
+MODEL_URL = 'https://storage.googleapis.com/deeplearning-archive/MRIGan/models.zip'
