@@ -20,7 +20,7 @@ Training is done using `mri_gan.py` file. The training is done in two steps. Fir
 
 ### Results
 GIF of the results is shown below.
-![GIF](https://storage.googleapis.com/deeplearning-archive/MRIGan/cyclegan.gif)
+[GIF](https://storage.googleapis.com/deeplearning-archive/MRIGan/cyclegan_360.gif)
 
 Final epoch results are shown below.
 
