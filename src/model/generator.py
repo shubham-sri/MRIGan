@@ -1,5 +1,5 @@
 import tensorflow as tf
-from src.model.res_block import ResBlockDown, ResBlockUp
+from src.model.res_block import DownBlock, UpBlock
 
 # U-Net generator using residual blocks for down and up sampling
 class Generator(tf.keras.Model):
@@ -8,172 +8,164 @@ class Generator(tf.keras.Model):
         super(Generator, self).__init__(**kwargs)
 
         # down sampling
-        self.down1 = ResBlockDown(
-            filters=64, 
-            kernel_size=(5, 5), 
-            strides=(1, 1), 
+        self.down1 = DownBlock(
+            filters=32, 
+            kernel_size=(4, 4), 
+            strides=(2, 2), 
             padding='same', 
-            activation=tf.keras.layers.LeakyReLU(alpha=0.2), 
+            activation=tf.keras.layers.LeakyReLU(), 
             use_bias=False,
-            kernel_initializer='he_normal', 
-            kernel_regularizer=tf.keras.regularizers.l2(0.0001)
+            kernel_initializer=tf.random_normal_initializer(0., 0.02), 
+            
         )
-        self.down2 = ResBlockDown(
+        self.down2 = DownBlock(
+            filters=32,
+            kernel_size=(4, 4),
+            strides=(2, 2),
+            padding='same',
+            activation=tf.keras.layers.LeakyReLU(),
+            use_bias=False,
+            kernel_initializer=tf.random_normal_initializer(0., 0.02),
+            
+        )
+        self.down3 = DownBlock(
+            filters=64,
+            kernel_size=(4, 4),
+            strides=(2, 2),
+            padding='same',
+            activation=tf.keras.layers.LeakyReLU(),
+            use_bias=False,
+            kernel_initializer=tf.random_normal_initializer(0., 0.02),
+            
+        )
+        self.down4 = DownBlock(
+            filters=64,
+            kernel_size=(4, 4),
+            strides=(2, 2),
+            padding='same',
+            activation=tf.keras.layers.LeakyReLU(),
+            use_bias=False,
+            kernel_initializer=tf.random_normal_initializer(0., 0.02),
+            
+        )
+        self.down5 = DownBlock(
             filters=128,
-            kernel_size=(3, 3),
-            strides=(1, 1),
+            kernel_size=(4, 4),
+            strides=(2, 2),
             padding='same',
-            activation=tf.keras.layers.LeakyReLU(alpha=0.2),
-            use_bias=True,
-            kernel_initializer='he_normal',
-            kernel_regularizer=tf.keras.regularizers.l2(0.0001)
+            activation=tf.keras.layers.LeakyReLU(),
+            use_bias=False,
+            kernel_initializer=tf.random_normal_initializer(0., 0.02),
+            
         )
-        self.down3 = ResBlockDown(
+        self.down6 = DownBlock(
             filters=128,
-            kernel_size=(3, 3),
-            strides=(1, 1),
+            kernel_size=(4, 4),
+            strides=(2, 2),
             padding='same',
-            activation=tf.keras.layers.LeakyReLU(alpha=0.2),
-            use_bias=True,
-            kernel_initializer='he_normal',
-            kernel_regularizer=tf.keras.regularizers.l2(0.0001)
+            activation=tf.keras.layers.LeakyReLU(),
+            use_bias=False,
+            kernel_initializer=tf.random_normal_initializer(0., 0.02),
+            
         )
-        self.down4 = ResBlockDown(
+        self.down7 = DownBlock(
             filters=128,
-            kernel_size=(3, 3),
-            strides=(1, 1),
+            kernel_size=(4, 4),
+            strides=(2, 2),
             padding='same',
-            activation=tf.keras.layers.LeakyReLU(alpha=0.2),
-            use_bias=True,
-            kernel_initializer='he_normal',
-            kernel_regularizer=tf.keras.regularizers.l2(0.0001)
-        )
-        self.down5 = ResBlockDown(
-            filters=128,
-            kernel_size=(3, 3),
-            strides=(1, 1),
-            padding='same',
-            activation=tf.keras.layers.LeakyReLU(alpha=0.2),
-            use_bias=True,
-            kernel_initializer='he_normal',
-            kernel_regularizer=tf.keras.regularizers.l2(0.0001)
-        )
-        self.down6 = ResBlockDown(
-            filters=256,
-            kernel_size=(3, 3),
-            strides=(1, 1),
-            padding='same',
-            activation=tf.keras.layers.LeakyReLU(alpha=0.2),
-            use_bias=True,
-            kernel_initializer='he_normal',
-            kernel_regularizer=tf.keras.regularizers.l2(0.0001)
-        )
-        self.down7 = ResBlockDown(
-            filters=256,
-            kernel_size=(3, 3),
-            strides=(1, 1),
-            padding='same',
-            activation=tf.keras.layers.LeakyReLU(alpha=0.2),
-            use_bias=True,
-            kernel_initializer='he_normal',
-            kernel_regularizer=tf.keras.regularizers.l2(0.0001)
+            activation=tf.keras.layers.LeakyReLU(),
+            use_bias=False,
+            kernel_initializer=tf.random_normal_initializer(0., 0.02),
+            
         )
 
         # bottleneck
-        self.bottleneck = ResBlockDown(
-            filters=512,
-            kernel_size=(3, 3),
-            strides=(1, 1),
+        self.bottleneck = DownBlock(
+            filters=256,
+            kernel_size=(4, 4),
+            strides=(2, 2),
             padding='same',
-            activation=tf.keras.layers.LeakyReLU(alpha=0.2),
-            use_bias=True,
-            kernel_initializer='he_normal',
-            kernel_regularizer=tf.keras.regularizers.l2(0.0001)
+            activation=tf.keras.layers.LeakyReLU(),
+            use_bias=False,
+            kernel_initializer=tf.random_normal_initializer(0., 0.02),
+            
         )
 
         # up sampling
-        self.up1 = ResBlockUp(
-            filters=256,
-            kernel_size=(3, 3),
-            strides=(1, 1),
+        self.up1 = UpBlock(
+            filters=128,
+            kernel_size=(4, 4),
+            strides=(2, 2),
             padding='same',
             activation=tf.keras.layers.ReLU(),
-            use_bias=True,
-            kernel_initializer='he_normal',
-            kernel_regularizer=tf.keras.regularizers.l2(0.0001)
+            use_bias=False,
+            kernel_initializer=tf.random_normal_initializer(0., 0.02),
         )
-        self.up2 = ResBlockUp(
-            filters=256,
-            kernel_size=(3, 3),
-            strides=(1, 1),
-            padding='same',
-            activation=tf.keras.layers.LeakyReLU(alpha=0.2),
-            use_bias=True,
-            kernel_initializer='he_normal',
-            kernel_regularizer=tf.keras.regularizers.l2(0.0001)
-        )
-        self.up3 = ResBlockUp(
+        self.up2 = UpBlock(
             filters=128,
-            kernel_size=(3, 3),
-            strides=(1, 1),
+            kernel_size=(4, 4),
+            strides=(2, 2),
+            padding='same',
+            activation=tf.keras.layers.LeakyReLU(),
+            use_bias=False,
+            kernel_initializer=tf.random_normal_initializer(0., 0.02),
+        )
+        self.up3 = UpBlock(
+            filters=128,
+            kernel_size=(4, 4),
+            strides=(2, 2),
             padding='same',
             activation=tf.keras.layers.ReLU(),
-            use_bias=True,
-            kernel_initializer='he_normal',
-            kernel_regularizer=tf.keras.regularizers.l2(0.0001)
+            use_bias=False,
+            kernel_initializer=tf.random_normal_initializer(0., 0.02),
         )
-        self.up4 = ResBlockUp(
-            filters=128,
-            kernel_size=(3, 3),
-            strides=(1, 1),
-            padding='same',
-            activation=tf.keras.layers.LeakyReLU(alpha=0.2),
-            use_bias=True,
-            kernel_initializer='he_normal',
-            kernel_regularizer=tf.keras.regularizers.l2(0.0001)
-        )
-        self.up5 = ResBlockUp(
-            filters=128,
-            kernel_size=(3, 3),
-            strides=(1, 1),
-            padding='same',
-            activation=tf.keras.layers.ReLU(),
-            use_bias=True,
-            kernel_initializer='he_normal',
-            kernel_regularizer=tf.keras.regularizers.l2(0.0001)
-        )
-        self.up6 = ResBlockUp(
-            filters=128,
-            kernel_size=(3, 3),
-            strides=(1, 1),
-            padding='same',
-            activation=tf.keras.layers.LeakyReLU(alpha=0.2),
-            use_bias=True,
-            kernel_initializer='he_normal',
-            kernel_regularizer=tf.keras.regularizers.l2(0.0001)
-        )
-        self.up7 = ResBlockUp(
+        self.up4 = UpBlock(
             filters=64,
-            kernel_size=(3, 3),
-            strides=(1, 1),
+            kernel_size=(4, 4),
+            strides=(2, 2),
             padding='same',
-            activation=tf.keras.layers.LeakyReLU(alpha=0.2),
-            use_bias=True,
-            kernel_initializer='he_normal',
-            kernel_regularizer=tf.keras.regularizers.l2(0.0001)
+            activation=tf.keras.layers.LeakyReLU(),
+            use_bias=False,
+            kernel_initializer=tf.random_normal_initializer(0., 0.02),
+        )
+        self.up5 = UpBlock(
+            filters=64,
+            kernel_size=(4, 4),
+            strides=(2, 2),
+            padding='same',
+            activation=tf.keras.layers.ReLU(),
+            use_bias=False,
+            kernel_initializer=tf.random_normal_initializer(0., 0.02),
+        )
+        self.up6 = UpBlock(
+            filters=64,
+            kernel_size=(4, 4),
+            strides=(2, 2),
+            padding='same',
+            activation=tf.keras.layers.LeakyReLU(),
+            use_bias=False,
+            kernel_initializer=tf.random_normal_initializer(0., 0.02),
+        )
+        self.up7 = UpBlock(
+            filters=32,
+            kernel_size=(4, 4),
+            strides=(2, 2),
+            padding='same',
+            activation=tf.keras.layers.LeakyReLU(),
+            use_bias=False,
+            kernel_initializer=tf.random_normal_initializer(0., 0.02),
         )
         
 
         # conv
-        self.conv = tf.keras.layers.Conv2DTranspose(
+        self.conv = UpBlock(
             filters=1,
-            kernel_size=(3, 3),
+            kernel_size=(4, 4),
             strides=(2, 2),
             padding='same',
-            activation=tf.keras.layers.LeakyReLU(alpha=0.2),
-            use_bias=True,
-            kernel_initializer='he_normal',
-            kernel_regularizer=tf.keras.regularizers.l2(0.0001)
+            activation='tanh',
+            use_bias=False,
+            kernel_initializer=tf.random_normal_initializer(0., 0.02),
         )
 
         # concat
@@ -193,8 +185,6 @@ class Generator(tf.keras.Model):
 
         # bottleneck
         x = self.bottleneck(x7, training=training)
-
-        print(x.shape)
 
         # up sampling
         x = self.up1(x, training=training)
