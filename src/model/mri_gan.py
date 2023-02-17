@@ -84,15 +84,29 @@ class MRIGan():
 
         # plot example t1 only in first row and predict t2 in second row, no need to plot t2
         prediction_t1_to_t2 = self.generator_t1_to_t2(self.example_t1, training=False)
+        prediction_t2_to_t1 = self.generator_t2_to_t1(self.example_t2, training=False)
 
         plt.figure(figsize=(10,10))
         for i in range(4):
-            plt.subplot(4, 2, 2*i+1)
+            # plt t1 to t2 and t2 to t1
+            plt.subplot(4, 4, i*4+1)
             plt.imshow(self.example_t1[i, :, :, 0] * 127.5 + 127.5, cmap='gray')
+            plt.title("T1 Original")
             plt.axis('off')
 
-            plt.subplot(4, 2, 2*i+2)
+            plt.subplot(4, 4, i*4+2)
             plt.imshow(prediction_t1_to_t2[i, :, :, 0] * 127.5 + 127.5, cmap='gray')
+            plt.title("T1 to T2")
+            plt.axis('off')
+
+            plt.subplot(4, 4, i*4+3)
+            plt.imshow(self.example_t2[i, :, :, 0] * 127.5 + 127.5, cmap='gray')
+            plt.title("T2 Original")
+            plt.axis('off')
+
+            plt.subplot(4, 4, i*4+4)
+            plt.imshow(prediction_t2_to_t1[i, :, :, 0] * 127.5 + 127.5, cmap='gray')
+            plt.title("T2 to T1")
             plt.axis('off')
         
         plt.savefig(
